@@ -1,0 +1,82 @@
+---
+title: "brain_activity"
+author: "Yiming Qian"
+date: "2025-03-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(lme4)
+```
+
+```{r}
+
+```
+
+```{r}
+amy_dhea<-lm(nback_amygdala~dhea_corrected*demo_sex_v2, data=df, na.action = na.exclude)
+anova(amy_dhea)
+```
+
+```{r}
+amy_dhea_cov<-lmer(nback_amygdala~dhea_corrected*demo_sex_v2+age (1|mri_info_deviceserialnumber)+(1|mri_info_deviceserialnumber:rel_family_id), data=df, na.action = na.omit)
+
+
+```
+
+```{r}
+amy_t<-lm(nback_amygdala~test_corrected*demo_sex_v2, data=df, na.action = na.omit)
+anova(amy_t)
+```
+
+```{r}
+df_female<-df %>% filter(demo_sex_v2=="Female")
+amy_est<-lm(nback_amygdala~estr_corrected, data=df_female, na.action = na.omit)
+anova(amy_est)
+```
+
+```{r}
+amy_pds<-lm(nback_amygdala~stage_y*demo_sex_v2, data=df, na.action = na.omit)
+anova(amy_pds)
+```
+# test
+```{r}
+lamy_dhea<-lm(tfmri_nback_all_194~dhea_corrected*demo_sex_v2, data=df, na.action = na.exclude)
+anova(lamy_dhea)
+```
+```{r}
+lamy_t<-lm(tfmri_nback_all_194~test_corrected*demo_sex_v2, data=df, na.action = na.exclude)
+anova(lamy_t)
+```
+
+```{r}
+ramy_est<-lm(tfmri_nback_all_194~estr_corrected, data=df, na.action = na.exclude)
+anova(ramy_est)
+```
+
+# visualization
+```{r}
+df %>%
+  ggplot(aes(x=dhea_corrected,y=nback_amygdala)) +
+  geom_point(alpha=0.5) +
+  labs(x= "DHEA", y="brain activation in amygdala")+
+  geom_smooth(method = "loess", se=T)
+```
+
+```{r}
+df %>%
+  ggplot(aes(x=test_corrected,y=nback_amygdala)) +
+  geom_point(alpha=0.5) +
+  labs(x= "T", y="brain activation in amygdala")+
+  geom_smooth(method = "loess", se=T)
+```
+
+```{r}
+df %>%
+  ggplot(aes(x=estr_corrected,y=nback_amygdala)) +
+  geom_point(alpha=0.5) +
+  labs(x= "E2", y="brain activation in amygdala")+
+  geom_smooth(method = "loess", se=T)
+```
+

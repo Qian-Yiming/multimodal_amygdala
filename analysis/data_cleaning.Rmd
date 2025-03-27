@@ -1,0 +1,133 @@
+---
+title: "data_cleaning"
+author: "Yiming Qian"
+date: "2025-03-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readxl)
+library(tidyverse)
+library("ggpubr")
+```
+
+# load data
+
+```{r cars}
+data <- read_excel("~/data/For_Yiming_20250304.xlsx", sheet = 1)
+```
+
+# filter data
+
+```{r, echo=FALSE}
+df <- data %>%  filter(eventname=="baseline_year_1_arm_1") 
+df$subjectid<- factor(df$subjectid)
+df$rel_family_id<- factor(df$rel_family_id)
+df$demo_sex_v2<- factor(df$demo_sex_v2)
+df$married2<- factor(df$married2)
+df$household.income<- factor(df$household.income)
+df$high.educ<- factor(df$high.educ)  # check this, whether it is  the highest education or the education level of the reporter
+df$race_ethnicity<- factor(df$race_ethnicity)
+df$site_id_l<- factor(df$site_id_l)
+df$mri_info_deviceserialnumber<- factor(df$mri_info_deviceserialnumber)
+```
+
+```{r}
+df$nback_amygdala <- (df$tfmri_nback_all_194+df$tfmri_nback_all_208)/2
+df$amygdala_vol <- (df$smri_vol_scs_amygdalalh+ df$smri_vol_scs_amygdalarh)/2
+df$amygdala_fc<-(df$rsfmri_cor_ngd_df_scs_aglh+df$rsfmri_cor_ngd_df_scs_agrh + 
+ df$rsfmri_cor_ngd_cerc_scs_aglh+df$rsfmri_cor_ngd_cerc_scs_agrh+
+df$rsfmri_cor_ngd_vs_scs_aglh+ df$rsfmri_cor_ngd_vs_scs_agrh + df$rsfmri_cor_ngd_au_scs_aglh+df$rsfmri_cor_ngd_au_scs_agrh +
+df$rsfmri_cor_ngd_copa_scs_aglh+df$rsfmri_cor_ngd_copa_scs_agrh + df$rsfmri_cor_ngd_dsa_scs_aglh + df$rsfmri_cor_ngd_dsa_scs_agrh+
+df$rsfmri_cor_ngd_fopa_scs_aglh + df$rsfmri_cor_ngd_fopa_scs_agrh + df$rsfmri_cor_ngd_none_scs_aglh + df$rsfmri_cor_ngd_none_scs_agrh + df$rsfmri_cor_ngd_rst_scs_aglh + df$rsfmri_cor_ngd_rst_scs_agrh + df$rsfmri_cor_ngd_smh_scs_aglh + df$rsfmri_cor_ngd_smh_scs_agrh + df$rsfmri_cor_ngd_smm_scs_aglh + df$rsfmri_cor_ngd_smm_scs_agrh + df$rsfmri_cor_ngd_vta_scs_aglh+ df$rsfmri_cor_ngd_vta_scs_agrh)/24
+```
+
+
+```{r}
+psych::describe(df$mri_info_deviceserialnumber)
+psych::describe(df$demo_sex_v2)
+psych::describe(df$dhea_corrected)
+```
+
+# visualize the data
+```{r}
+ggdensity(df$dhea_corrected,   xlab = "DHEA")
+ggdensity(df$test_corrected,   xlab = "T")
+ggdensity(df$estr_corrected,   xlab = "E2")
+ggdensity(df$stage_p,   xlab = "Puberty stage")
+```
+
+```{r}
+ggdensity(df$nback_amygdala,   xlab = "Brain activation")
+ggdensity(df$tfmri_nback_all_meanmotion,   xlab = "FD")
+ggdensity(df$amygdala_vol,   xlab = "Amygdala Volume")
+ggdensity(df$smri_vol_cdk_total,   xlab = "Whole-brain Volume")
+ggdensity(df$amygdala_fc,   xlab = "Whole-brain Volume")
+```
+
+```{r}
+boxplot(df$dhea_corrected,df$test_corrected,df$estr_corrected, df$stage_p)
+boxplot(df$nback_amygdala)
+boxplot(df$tfmri_nback_all_meanmotion) 
+boxplot(df$amygdala_vol)
+boxplot(df$smri_vol_cdk_total)
+boxplot(df$amygdala_fc)
+```
+
+```{r}
+boxplot(df[29:52])
+```
+
+
+# check outliers and normal distribution
+```{r}
+findzoutlier<-function(points){
+  z = (points-mean(points))/sd(points)
+
+#subset data frame where z-score of points value is greater than 3
+outliers = points[which(z>3)]
+outliers
+}
+findqoutlier<-function(points){
+  Q1 <- quantile(points, .25)
+Q3 <- quantile(points, .75)
+IQR <- IQR(points)
+
+#subset data where points value is outside 1.5*IQR of Q1 and Q3
+outliers <- points[which(points<(Q1 - 1.5*IQR) | points>(Q3 + 1.5*IQR))]
+outliers
+}
+```
+
+```{r}
+findzoutlier(df$dhea_corrected)
+findzoutlier(df$test_corrected)
+findzoutlier(df$estr_corrected)
+findzoutlier(df$stage_p)
+findzoutlier(df$nback_amygdala)
+findzoutlier(df$tfmri_nback_all_meanmotion) 
+findzoutlier(df$amygdala_vol)
+findzoutlier(df$smri_vol_cdk_total)
+findzoutlier(df$amygdala_fc)
+```
+
+```{r}
+findzoutlier(df$dhea_corrected)
+findzoutlier(df$test_corrected)
+findzoutlier(df$estr_corrected)
+findzoutlier(df$stage_p)
+findzoutlier(df$nback_amygdala)
+findzoutlier(df$tfmri_nback_all_meanmotion) 
+findzoutlier(df$amygdala_vol)
+findzoutlier(df$smri_vol_cdk_total)
+findqoutlier(df$amygdala_fc)
+```
+
+# missing data
+
+# filter the motion
+```{r}
+df[which(df$tfmri_nback_all_meanmotion>=2),c(54,65)]
+```
+
