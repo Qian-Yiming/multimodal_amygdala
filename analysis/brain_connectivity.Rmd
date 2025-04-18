@@ -1,0 +1,137 @@
+---
+title: "Brain_connectivity"
+author: "Yiming Qian"
+date: "2025-04-18"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(lme4)
+library(tidyverse)
+library(ggplot2)
+library(purrr)
+library(broom.mixed) 
+library(knitr)
+library(kableExtra)
+```
+
+
+```{r}
+df<- read.csv("C:/Users/ymqian/Documents/multimodal_amygdala/analysis/processed_data.csv")
+```
+
+rsfMRI: iqc_rsfmri_ok_ser>0, fsqc_qc=1 (Passed FreeSurfer QC), rsfmri_c_ngd_ntpoints > 375 (exclude excession motion) imgincl_rsfmri_include = 1 (I forget to ask for this variable)
+controlling for mean framewise displacement
+for all scans passing QC (iqc_rsfmri_ok_mean_motion) and number of frames after excluding
+outlier frames (rsfmri_ntpoints),
+
+```{r}
+df_rsfMRI<- df  %>%  filter(iqc_t1_ok_ser > 0)  %>% filter(fsqc_qc != "reject" | is.na(fsqc_qc)) %>% filter(rsfmri_ntpoints> 750) 
+```
+from N= 11634 to N=7345
+
+```{r}
+amy_pds_fc<-lm(amygdala_fc~stage_p*demo_sex_v2, data=df_rsfMRI, na.action = na.omit)
+anova(amy_pds_fc)
+```
+
+```{r}
+amy_dhea_fc<-lm(amygdala_fc~dhea_corrected*demo_sex_v2, data=df_rsfMRI, na.action = na.omit)
+anova(amy_dhea_fc)
+```
+```{r}
+amy_test_fc<-lm(amygdala_fc~test_corrected*demo_sex_v2, data=df_rsfMRI, na.action = na.omit)
+anova(amy_test_fc)
+```
+```{r}
+amy_estr_fc<-lm(amygdala_fc~estr_corrected, data=df_rsfMRI, na.action = na.omit)
+anova(amy_estr_fc)
+```
+other 
+```{r}
+dv_list <- c("amygdala_fc","amygdala_fc_df","amygdala_fc_cerc","amygdala_fc_vs","amygdala_fc_au","amygdala_fc_copa","amygdala_fc_dsa","amygdala_fc_fopa","amygdala_fc_none","amygdala_fc_rst","amygdala_fc_smh","amygdala_fc_smm","amygdala_fc_vta")
+models <- map(dv_list, ~ lm(as.formula(paste(.x, "~ stage_p*demo_sex_v2")), 
+                            data = df_rsfMRI, na.action = na.omit))
+
+names(models) <- dv_list
+
+# Example: get tidy results for all models
+results <- map_df(models, tidy, .id = "DV")
+pvals <- map_df(models, ~ tidy(.x) %>% 
+                  select(term, estimate, p.value), 
+                .id = "DV")
+pvals <- pvals %>%
+  mutate(p.value = round(p.value, 3),
+         estimate = round(estimate, 3))
+print(pvals)
+```
+whole brain, df, cerc,au, copa,dsa,fopa, none,rst,smh,smm,vta ~pubertal stage
+whole brain, copa,fopa,vta ~sex
+smh ~interaction
+```{r}
+models_dhea <- map(dv_list, ~ lm(as.formula(paste(.x, "~ dhea_corrected*demo_sex_v2")), 
+                            data = df_rsfMRI, na.action = na.omit))
+
+names(models_dhea) <- dv_list
+pvals_dhea <- map_df(models_dhea, ~ tidy(.x) %>% 
+                  select(term, estimate, p.value), 
+                .id = "DV")
+pvals_dhea <- pvals_dhea %>%
+  mutate(p.value = round(p.value, 3),
+         estimate = round(estimate, 3))
+print(pvals_dhea)
+```
+
+whole brain,df,cerc,dsa,fopa,smh,smm ~dhea
+whole brain,copa,dsa,fopa, smh,smm,vta ~sex
+smh ~dhea*sex
+
+```{r}
+models_test <- map(dv_list, ~ lm(as.formula(paste(.x, "~ test_corrected*demo_sex_v2")), 
+                            data = df_rsfMRI, na.action = na.omit))
+
+names(models_test) <- dv_list
+pvals_test<- map_df(models_test, ~ tidy(.x) %>% 
+                  select(term, estimate, p.value), 
+                .id = "DV")
+pvals_test <- pvals_test %>%
+  mutate(p.value = round(p.value, 3),
+         estimate = round(estimate, 3))
+print(pvals_test)
+```
+whole brain, df, cerc,fopa, smh, smm ~ test
+whole brain, copa, dsa, fopa, smh, smm, vta ~sex
+
+```{r}
+models_estr <- map(dv_list, ~ lm(as.formula(paste(.x, "~ estr_corrected")), 
+                            data = df_rsfMRI, na.action = na.omit))
+
+names(models_estr) <- dv_list
+pvals_estr <- map_df(models_estr, ~ tidy(.x) %>% 
+                  select(term, estimate, p.value), 
+                .id = "DV")
+pvals_estr <- pvals_estr %>%
+  mutate(p.value = round(p.value, 3),
+         estimate = round(estimate, 3))
+print(pvals_estr)
+```
+whole brain, cerc,dsa ~ estr
+
+# sensirivity analysis (add cov)
+```{r} 
+models_dhea1<- map(dv_list, ~ {
+  formula <- as.formula(paste(.x, "~ dhea_corrected * demo_sex_v2 + age + race_ethnicity + household.income + married2 + high.educ + pea_wiscv_trs + rsfmri_ntpoints + (1|mri_info_deviceserialnumber) + (1|mri_info_deviceserialnumber:rel_family_id)"))
+  lmer(formula, data = df_rsfMRI, na.action = na.omit)})
+
+
+names(models_dhea1) <- dv_list
+
+# Extract tidy results
+results_dhea1 <- map_df(models_dhea1, ~ tidy(.x, effects = "fixed", conf.int = TRUE), .id = "DV")
+
+car::Anova(models_dhea1[[1]])
+tab_model(models_dhea1[[1]], show.ci = FALSE, show.re.var = TRUE, show.p = TRUE,
+          dv.labels = "My Outcome Variable")
+```

@@ -15,14 +15,14 @@ library("ggpubr")
 # load data
 
 ```{r cars}
-data <- read_excel("~/data/For_Yiming_20250304.xlsx", sheet = 1)
+data <- read_excel("C:/Users/ymqian/Documents/multimodal_amygdala/data/For_Yiming_20250415.xlsx", sheet = 1)
 ```
 
 # filter data
 
 ```{r, echo=FALSE}
 df <- data %>%  filter(eventname=="baseline_year_1_arm_1") 
-df$subjectid<- factor(df$subjectid)
+df$src_subject_id<- factor(df$src_subject_id)
 df$rel_family_id<- factor(df$rel_family_id)
 df$demo_sex_v2<- factor(df$demo_sex_v2)
 df$married2<- factor(df$married2)
@@ -34,14 +34,50 @@ df$mri_info_deviceserialnumber<- factor(df$mri_info_deviceserialnumber)
 ```
 
 ```{r}
-df$nback_amygdala <- (df$tfmri_nback_all_194+df$tfmri_nback_all_208)/2
+df$nback_amygdala_emotion_neutral <- (df$tfmri_nback_all_194+df$tfmri_nback_all_208)/2
+df$nback_amygdala_negative_neutral <- (df$tfmri_nback_all_224+df$tfmri_nback_all_238)/2
+df$nback_amygdala_positive_neutral <- (df$tfmri_nback_all_254+df$tfmri_nback_all_268)/2
+df$nback_amygdala_emotion <- (df$tfmri_nback_all_104+df$tfmri_nback_all_118)/2
+df$nback_amygdala_neutral <-df$nback_amygdala_emotion/2-df$nback_amygdala_emotion_neutral
+# here I assume emotion=positive + negative
+# emotion-neutral = (positive + negative)/2- neutral
+# df$nback_amygdala_positive <-
+```
+
+```{r}
 df$amygdala_vol <- (df$smri_vol_scs_amygdalalh+ df$smri_vol_scs_amygdalarh)/2
+```
+
+```{r}
 df$amygdala_fc<-(df$rsfmri_cor_ngd_df_scs_aglh+df$rsfmri_cor_ngd_df_scs_agrh + 
  df$rsfmri_cor_ngd_cerc_scs_aglh+df$rsfmri_cor_ngd_cerc_scs_agrh+
 df$rsfmri_cor_ngd_vs_scs_aglh+ df$rsfmri_cor_ngd_vs_scs_agrh + df$rsfmri_cor_ngd_au_scs_aglh+df$rsfmri_cor_ngd_au_scs_agrh +
 df$rsfmri_cor_ngd_copa_scs_aglh+df$rsfmri_cor_ngd_copa_scs_agrh + df$rsfmri_cor_ngd_dsa_scs_aglh + df$rsfmri_cor_ngd_dsa_scs_agrh+
 df$rsfmri_cor_ngd_fopa_scs_aglh + df$rsfmri_cor_ngd_fopa_scs_agrh + df$rsfmri_cor_ngd_none_scs_aglh + df$rsfmri_cor_ngd_none_scs_agrh + df$rsfmri_cor_ngd_rst_scs_aglh + df$rsfmri_cor_ngd_rst_scs_agrh + df$rsfmri_cor_ngd_smh_scs_aglh + df$rsfmri_cor_ngd_smh_scs_agrh + df$rsfmri_cor_ngd_smm_scs_aglh + df$rsfmri_cor_ngd_smm_scs_agrh + df$rsfmri_cor_ngd_vta_scs_aglh+ df$rsfmri_cor_ngd_vta_scs_agrh)/24
+
+df$amygdala_fc_df<-(df$rsfmri_cor_ngd_df_scs_aglh + df$rsfmri_cor_ngd_df_scs_agrh)/2 
+df$amygdala_fc_cerc<-(df$rsfmri_cor_ngd_cerc_scs_aglh + df$rsfmri_cor_ngd_cerc_scs_agrh)/2
+df$amygdala_fc_vs<-(df$rsfmri_cor_ngd_vs_scs_aglh + df$rsfmri_cor_ngd_vs_scs_agrh)/2
+df$amygdala_fc_au<-(df$rsfmri_cor_ngd_au_scs_aglh + df$rsfmri_cor_ngd_au_scs_agrh)/2
+df$amygdala_fc_copa<-(df$rsfmri_cor_ngd_copa_scs_aglh + df$rsfmri_cor_ngd_copa_scs_agrh)/2
+df$amygdala_fc_dsa<-(df$rsfmri_cor_ngd_dsa_scs_aglh + df$rsfmri_cor_ngd_dsa_scs_agrh)/2
+df$amygdala_fc_fopa<-(df$rsfmri_cor_ngd_fopa_scs_aglh + df$rsfmri_cor_ngd_fopa_scs_agrh)/2
+df$amygdala_fc_none<-(df$rsfmri_cor_ngd_none_scs_aglh + df$rsfmri_cor_ngd_none_scs_agrh)/2
+df$amygdala_fc_rst<-(df$rsfmri_cor_ngd_rst_scs_aglh + df$rsfmri_cor_ngd_rst_scs_agrh)/2
+df$amygdala_fc_smh<-(df$rsfmri_cor_ngd_smh_scs_aglh + df$rsfmri_cor_ngd_smh_scs_agrh)/2
+df$amygdala_fc_smm<-(df$rsfmri_cor_ngd_smm_scs_aglh + df$rsfmri_cor_ngd_smm_scs_agrh)/2
+df$amygdala_fc_vta<-(df$rsfmri_cor_ngd_vta_scs_aglh+ df$rsfmri_cor_ngd_vta_scs_agrh)/2
 ```
+
+# rename the variable
+```{r}
+df <- df %>% 
+  rename(
+    Pubertal_Stage = stage_p,
+    Sex = demo_sex_v2
+  )
+```
+
 
 
 ```{r}
@@ -64,6 +100,7 @@ ggdensity(df$tfmri_nback_all_meanmotion,   xlab = "FD")
 ggdensity(df$amygdala_vol,   xlab = "Amygdala Volume")
 ggdensity(df$smri_vol_cdk_total,   xlab = "Whole-brain Volume")
 ggdensity(df$amygdala_fc,   xlab = "Whole-brain Volume")
+ggdensity(df$tfmri_nb_all_beh_ctotal_rate,   xlab = "Beh Accuracy")
 ```
 
 ```{r}
@@ -90,9 +127,9 @@ outliers = points[which(z>3)]
 outliers
 }
 findqoutlier<-function(points){
-  Q1 <- quantile(points, .25)
-Q3 <- quantile(points, .75)
-IQR <- IQR(points)
+  Q1 <- quantile(points, .25, na.rm = TRUE)
+Q3 <- quantile(points, .75, na.rm = TRUE)
+IQR <- IQR(points, na.rm = TRUE)
 
 #subset data where points value is outside 1.5*IQR of Q1 and Q3
 outliers <- points[which(points<(Q1 - 1.5*IQR) | points>(Q3 + 1.5*IQR))]
@@ -101,10 +138,6 @@ outliers
 ```
 
 ```{r}
-findzoutlier(df$dhea_corrected)
-findzoutlier(df$test_corrected)
-findzoutlier(df$estr_corrected)
-findzoutlier(df$stage_p)
 findzoutlier(df$nback_amygdala)
 findzoutlier(df$tfmri_nback_all_meanmotion) 
 findzoutlier(df$amygdala_vol)
@@ -113,21 +146,23 @@ findzoutlier(df$amygdala_fc)
 ```
 
 ```{r}
-findzoutlier(df$dhea_corrected)
-findzoutlier(df$test_corrected)
-findzoutlier(df$estr_corrected)
-findzoutlier(df$stage_p)
-findzoutlier(df$nback_amygdala)
-findzoutlier(df$tfmri_nback_all_meanmotion) 
-findzoutlier(df$amygdala_vol)
-findzoutlier(df$smri_vol_cdk_total)
+findqoutlier(df$nback_amygdala)
+findqoutlier(df$tfmri_nback_all_meanmotion) 
+findqoutlier(df$amygdala_vol)
+findqoutlier(df$smri_vol_cdk_total)
 findqoutlier(df$amygdala_fc)
 ```
+# save data
+```{r}
+write.csv(df, file = "processed_data.csv")
+```
+
 
 # missing data
 
 # filter the motion
 ```{r}
 df[which(df$tfmri_nback_all_meanmotion>=2),c(54,65)]
+
 ```
 

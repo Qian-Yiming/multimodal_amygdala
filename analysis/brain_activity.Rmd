@@ -8,75 +8,221 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(lme4)
+library(tidyverse)
+library(ggplot2)
+library(sjPlot)
+```
+
+
+```{r}
+df<- read.csv("C:/Users/ymqian/Documents/multimodal_amygdala/analysis/processed_data.csv")
+```
+# activation<-df[which(df$tfmri_nback_all_meanmotion<2),c(4,5,6,10,54,65,63,61,59,56)]
+
+Inclusion criteria for using EN-BACK data in prelim analyses, based on QC variables
+Include if fsqc_qc == 1 & :iqc_t1_ok_ser > 0 & :iqc_nback_ok_ser > 0 & :iqc_nback_ep_scan_missing == 0 & :tfmri_nback_all_beta_dof > 200 &
+:tfmri_nback_beh_perform.flag == 1
+
+
+```{r}
+# df_fMRI<- df %>% filter(iqc_t1_ok_ser > 0 ) %>% filter(iqc_nback_ok_ser > 0) %>% filter(tfmri_nback_all_subthreshnvols > 200) %>% filter(tfmri_nback_beh_performflag == 1) %>% filter(fsqc_qc != "reject" | is.na(fsqc_qc)) 
+
+df_fMRI<- df  %>%  filter(imgincl_nback_include=="Yes") 
+```
+fsqc_qc == "accept", from N= 7607 to N= 507
+from N= 11634 to N=7607
+
+```{r}
+amy_pds<-lm(nback_amygdala_emotion_neutral~stage_p*demo_sex_v2, data=df_fMRI, na.action = na.omit)
+anova(amy_pds)
 ```
 
 ```{r}
-
+amy_pds2<-lm(nback_amygdala_emotion~stage_p*demo_sex_v2, data=df_fMRI, na.action = na.omit)
+anova(amy_pds2)
+tab_model(amy_pds, amy_pds2, dv.labels = c("Amygdala Activation [Emotion versus Neutral Faces]", "Amygdala Activation [Emotion]"))
 ```
 
+
 ```{r}
-amy_dhea<-lm(nback_amygdala~dhea_corrected*demo_sex_v2, data=df, na.action = na.exclude)
+amy_dhea<-lm(nback_amygdala_emotion_neutral~dhea_corrected*demo_sex_v2, data=df_fMRI, na.action = na.omit)
 anova(amy_dhea)
 ```
 
 ```{r}
-amy_dhea_cov<-lmer(nback_amygdala~dhea_corrected*demo_sex_v2+age (1|mri_info_deviceserialnumber)+(1|mri_info_deviceserialnumber:rel_family_id), data=df, na.action = na.omit)
-
-
+amy_dhea2<-lm(nback_amygdala_emotion~dhea_corrected*demo_sex_v2, data=df_fMRI, na.action = na.omit)
+anova(amy_dhea2)
+```
+```{r}
+amy_test<-lm(nback_amygdala_emotion_neutral~test_corrected*demo_sex_v2, data=df_fMRI, na.action = na.omit)
+anova(amy_test)
 ```
 
 ```{r}
-amy_t<-lm(nback_amygdala~test_corrected*demo_sex_v2, data=df, na.action = na.omit)
-anova(amy_t)
+amy_test2<-lm(nback_amygdala_emotion~test_corrected*demo_sex_v2, data=df_fMRI, na.action = na.omit)
+anova(amy_test2)
 ```
 
 ```{r}
-df_female<-df %>% filter(demo_sex_v2=="Female")
-amy_est<-lm(nback_amygdala~estr_corrected, data=df_female, na.action = na.omit)
+amy_est<-lm(nback_amygdala_emotion_neutral~estr_corrected, data=df_fMRI, na.action = na.omit)
 anova(amy_est)
 ```
 
 ```{r}
-amy_pds<-lm(nback_amygdala~stage_y*demo_sex_v2, data=df, na.action = na.omit)
-anova(amy_pds)
+amy_est2<-lm(nback_amygdala_emotion~estr_corrected, data=df_fMRI, na.action = na.omit)
+anova(amy_est2)
 ```
-# test
+
+# add covariates
 ```{r}
-lamy_dhea<-lm(tfmri_nback_all_194~dhea_corrected*demo_sex_v2, data=df, na.action = na.exclude)
+amy_pdss<-lmer(nback_amygdala_emotion_neutral~stage_p*demo_sex_v2+age+race_ethnicity +household.income+married2 + high.educ+pea_wiscv_trs+tfmri_nback_all_meanmotion +tfmri_nb_all_beh_ctotal_rate+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id ) , data=df, na.action = na.omit)
+car::Anova(amy_pdss)
+```
+
+```{r}
+amy_pdss1<-lmer(nback_amygdala_emotion~stage_p*demo_sex_v2+age+race_ethnicity +household.income+married2 + high.educ+pea_wiscv_trs+tfmri_nback_all_meanmotion +tfmri_nb_all_beh_ctotal_rate+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id ) , data=df, na.action = na.omit)
+car::Anova(amy_pdss1)
+```
+```{r}
+amy_dheas<-lmer(nback_amygdala_emotion_neutral~dhea_corrected*demo_sex_v2+age+race_ethnicity +household.income+married2 + high.educ+pea_wiscv_trs+tfmri_nback_all_meanmotion +tfmri_nb_all_beh_ctotal_rate+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id ) , data=df, na.action = na.omit)
+car::Anova(amy_dheas)%>%
+  kable(format = "html", digits = 3, caption = "Mixed Model Results for DHEA") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE,
+                position = "left") %>%
+  scroll_box(height = "400px")
+```
+
+```{r}
+amy_dheas1<-lmer(nback_amygdala_emotion~dhea_corrected*demo_sex_v2+age+race_ethnicity +household.income+married2 + high.educ+pea_wiscv_trs+tfmri_nback_all_meanmotion +tfmri_nb_all_beh_ctotal_rate+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id ) , data=df, na.action = na.omit)
+car::Anova(amy_dheas1)
+```
+```{r}
+amy_tests<-lmer(nback_amygdala_emotion_neutral~test_corrected*demo_sex_v2+age+race_ethnicity +household.income+married2 + high.educ+pea_wiscv_trs+tfmri_nback_all_meanmotion +tfmri_nb_all_beh_ctotal_rate+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id ) , data=df, na.action = na.omit)
+car::Anova(amy_tests)
+```
+```{r}
+amy_tests1<-lmer(nback_amygdala_emotion~test_corrected*demo_sex_v2+age+race_ethnicity +household.income+married2 + high.educ+pea_wiscv_trs+tfmri_nback_all_meanmotion +tfmri_nb_all_beh_ctotal_rate+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id ) , data=df, na.action = na.omit)
+car::Anova(amy_tests1)
+```
+```{r}
+amy_estrs<-lmer(nback_amygdala_emotion_neutral~estr_corrected+age+race_ethnicity +household.income+married2 + high.educ+pea_wiscv_trs+tfmri_nback_all_meanmotion +tfmri_nb_all_beh_ctotal_rate+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id) , data=df, na.action = na.omit)
+car::Anova(amy_estrs)
+```
+
+```{r}
+amy_estrs1<-lmer(nback_amygdala_emotion~estr_corrected+age+race_ethnicity +household.income+married2 + high.educ+pea_wiscv_trs+tfmri_nback_all_meanmotion +tfmri_nb_all_beh_ctotal_rate+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id) , data=df, na.action = na.omit)
+car::Anova(amy_estrs1)
+```
+why high education prodict the emotional sensitivity
+
+# test:
+left amygdala
+```{r}
+lamy_pds<-lm(tfmri_nback_all_194~stage_p*demo_sex_v2, data=df, na.action = na.omit)
+anova(lamy_pds)
+```
+
+```{r}
+lamy_pds<-lm(tfmri_nback_all_104~stage_p*demo_sex_v2, data=df, na.action = na.omit)
+anova(lamy_pds)
+```
+
+```{r}
+lamy_dhea<-lm(tfmri_nback_all_194~dhea_corrected*demo_sex_v2, data=df, na.action = na.omit)
 anova(lamy_dhea)
 ```
 ```{r}
-lamy_t<-lm(tfmri_nback_all_194~test_corrected*demo_sex_v2, data=df, na.action = na.exclude)
+lamy_dhea<-lm(tfmri_nback_all_104~dhea_corrected*demo_sex_v2, data=df, na.action = na.omit)
+anova(lamy_dhea)
+```
+```{r}
+lamy_t<-lm(tfmri_nback_all_194~test_corrected*demo_sex_v2, data=df, na.action = na.omit)
+anova(lamy_t)
+```
+```{r}
+lamy_t<-lm(tfmri_nback_all_104~test_corrected*demo_sex_v2, data=df, na.action = na.omit)
 anova(lamy_t)
 ```
 
 ```{r}
-ramy_est<-lm(tfmri_nback_all_194~estr_corrected, data=df, na.action = na.exclude)
+ramy_est<-lm(tfmri_nback_all_194~estr_corrected, data=df, na.action = na.omit)
+anova(ramy_est)
+```
+
+```{r}
+ramy_est<-lm(tfmri_nback_all_104~estr_corrected, data=df, na.action = na.omit)
+anova(ramy_est)
+```
+right amygdala
+```{r}
+lamy_pds<-lm(tfmri_nback_all_208~stage_p*demo_sex_v2, data=df, na.action = na.omit)
+anova(lamy_pds)
+```
+
+```{r}
+lamy_pds<-lm(tfmri_nback_all_118~stage_p*demo_sex_v2, data=df, na.action = na.omit)
+anova(lamy_pds)
+```
+
+```{r}
+lamy_dhea<-lm(tfmri_nback_all_208~dhea_corrected*demo_sex_v2, data=df, na.action = na.omit)
+anova(lamy_dhea)
+```
+```{r}
+lamy_dhea<-lm(tfmri_nback_all_118~dhea_corrected*demo_sex_v2, data=df, na.action = na.omit)
+anova(lamy_dhea)
+```
+
+```{r}
+lamy_t<-lm(tfmri_nback_all_208~test_corrected*demo_sex_v2, data=df, na.action = na.omit)
+anova(lamy_t)
+```
+```{r}
+lamy_t<-lm(tfmri_nback_all_118~test_corrected*demo_sex_v2, data=df, na.action = na.omit)
+anova(lamy_t)
+```
+
+```{r}
+ramy_est<-lm(tfmri_nback_all_208~estr_corrected, data=df, na.action = na.omit)
+anova(ramy_est)
+```
+
+```{r}
+ramy_est<-lm(tfmri_nback_all_118~estr_corrected, data=df, na.action = na.omit)
 anova(ramy_est)
 ```
 
 # visualization
 ```{r}
 df %>%
-  ggplot(aes(x=dhea_corrected,y=nback_amygdala)) +
-  geom_point(alpha=0.5) +
-  labs(x= "DHEA", y="brain activation in amygdala")+
-  geom_smooth(method = "loess", se=T)
+  ggplot(aes(x=stage_p,y=nback_amygdala_emotion, group=demo_sex_v2, color=demo_sex_v2)) +
+  geom_point(alpha=0.3) +
+  labs(x= "PDS", y="Brain activation in amygdala")+
+  geom_smooth(method = "loess", se=T)+theme_classic()
 ```
 
 ```{r}
 df %>%
-  ggplot(aes(x=test_corrected,y=nback_amygdala)) +
-  geom_point(alpha=0.5) +
+  ggplot(aes(x=dhea_corrected,y=nback_amygdala_emotion, group=demo_sex_v2, color=demo_sex_v2)) +
+  geom_point(alpha=0.3) +
+  labs(x= "DHEA", y="Brain activation in amygdala")+
+  geom_smooth(method = "loess", se=T)+theme_classic()
+```
+
+```{r}
+df %>%
+  ggplot(aes(x=test_corrected,y=nback_amygdala_emotion, group=demo_sex_v2, color=demo_sex_v2)) +
+  geom_point(alpha=0.3) +
   labs(x= "T", y="brain activation in amygdala")+
-  geom_smooth(method = "loess", se=T)
+  geom_smooth(method = "loess", se=T)+theme_classic()
 ```
 
 ```{r}
 df %>%
-  ggplot(aes(x=estr_corrected,y=nback_amygdala)) +
-  geom_point(alpha=0.5) +
+  ggplot(aes(x=estr_corrected,y=nback_amygdala_emotion, group=demo_sex_v2, color=demo_sex_v2)) +
+  geom_point(alpha=0.3) +
   labs(x= "E2", y="brain activation in amygdala")+
-  geom_smooth(method = "loess", se=T)
+  geom_smooth(method = "loess", se=T)+theme_classic()
 ```
 
