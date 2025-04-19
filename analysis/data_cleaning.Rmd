@@ -76,6 +76,12 @@ df <- df %>%
     Pubertal_Stage = stage_p,
     Sex = demo_sex_v2
   )
+df <- df %>% 
+  rename(
+    T_corrected = test_corrected,
+    DHEA_corrected = dhea_corrected,
+    E2_corrected = estr_corrected
+  )
 ```
 
 
@@ -163,6 +169,5 @@ write.csv(df, file = "processed_data.csv")
 # filter the motion
 ```{r}
 df[which(df$tfmri_nback_all_meanmotion>=2),c(54,65)]
-
 ```
 

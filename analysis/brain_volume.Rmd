@@ -1,0 +1,99 @@
+---
+title: "brain_volume"
+author: "Yiming Qian"
+date: "2025-04-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(lme4)
+library(tidyverse)
+library(ggplot2)
+library(purrr)
+library(broom.mixed) 
+library(sjPlot)
+library(webshot2)
+```
+
+```{r}
+# df<- read.csv("C:/Users/ymqian/Documents/multimodal_amygdala/analysis/processed_data.csv")
+```
+
+Inclusion criteria for Volume: iqc_t1_ok_ser>0 (satisfactory T1), fsqc_qc=1 (Passed FreeSurfer QC)
+
+```{r}
+# df_fMRI<- df %>% filter(iqc_t1_ok_ser > 0 ) %>% filter(iqc_nback_ok_ser > 0) %>% filter(tfmri_nback_all_subthreshnvols > 200) %>% filter(tfmri_nback_beh_performflag == 1) %>% filter(fsqc_qc != "reject" | is.na(fsqc_qc)) 
+
+df_t1<- df  %>% filter(iqc_t1_ok_ser > 0 )%>% filter(fsqc_qc == "accept" ) 
+```
+
+```{r}
+vol_pds<-lmer(amygdala_vol ~Pubertal_Stage*Sex+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id ), data=df_t1, na.action = na.omit)
+vol_pds_lh<-lmer(smri_vol_scs_amygdalalh ~Pubertal_Stage*Sex+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id ), data=df_t1, na.action = na.omit)
+vol_pds_rh<-lmer(smri_vol_scs_amygdalarh ~Pubertal_Stage*Sex+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id ), data=df_t1, na.action = na.omit)
+```
+
+```{r}
+ tab_model(vol_pds,vol_pds_lh, vol_pds_rh, show.ci = FALSE, show.re.var = TRUE, show.p = TRUE, dv.labels = c("Amygdala Volume", "Left Amygdala Volume", "Right Amygdala Volume"),file = "table/Volume_PDS.html")
+webshot("table/Volume_PDS.html", "table/Volume_PDS.png")
+```
+```{r}
+vol_dhea<-lmer(amygdala_vol ~DHEA_corrected*Sex+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id ), data=df_t1, na.action = na.omit)
+vol_dhea_lh<-lmer(smri_vol_scs_amygdalalh ~DHEA_corrected*Sex+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id ), data=df_t1, na.action = na.omit)
+vol_dhea_rh<-lmer(smri_vol_scs_amygdalarh ~DHEA_corrected*Sex+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id ), data=df_t1, na.action = na.omit)
+```
+
+```{r}
+ tab_model(vol_dhea,vol_dhea_lh, vol_dhea_rh, show.ci = FALSE, show.re.var = TRUE, show.p = TRUE, dv.labels = c("Amygdala Volume", "Left Amygdala Volume", "Right Amygdala Volume"),file = "table/Volume_DHEA.html")
+webshot("table/Volume_DHEA.html", "table/Volume_DHEA.png")
+```
+
+```{r}
+vol_test<-lmer(amygdala_vol ~T_corrected*Sex+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id ), data=df_t1, na.action = na.omit)
+vol_test_lh<-lmer(smri_vol_scs_amygdalalh ~T_corrected*Sex+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id ), data=df_t1, na.action = na.omit)
+vol_test_rh<-lmer(smri_vol_scs_amygdalarh ~T_corrected*Sex+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id ), data=df_t1, na.action = na.omit)
+```
+
+```{r}
+ tab_model(vol_test,vol_test_lh, vol_test_rh, show.ci = FALSE, show.re.var = TRUE, show.p = TRUE, dv.labels = c("Amygdala Volume", "Left Amygdala Volume", "Right Amygdala Volume"),file = "table/Volume_T.html")
+webshot("table/Volume_T.html", "table/Volume_T.png")
+```
+```{r}
+vol_E2<-lmer(amygdala_vol ~E2_corrected+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id ), data=df_t1, na.action = na.omit)
+vol_E2_lh<-lmer(smri_vol_scs_amygdalalh ~E2_corrected+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id ), data=df_t1, na.action = na.omit)
+vol_E2_rh<-lmer(smri_vol_scs_amygdalarh ~E2_corrected+(1|mri_info_deviceserialnumber) +(1|mri_info_deviceserialnumber:rel_family_id ), data=df_t1, na.action = na.omit)
+```
+
+```{r}
+ tab_model(vol_E2,vol_E2_lh, vol_E2_rh, show.ci = FALSE, show.re.var = TRUE, show.p = TRUE, dv.labels = c("Amygdala Volume", "Left Amygdala Volume", "Right Amygdala Volume"),file = "table/Volume_E2.html")
+webshot("table/Volume_E2.html", "table/Volume_E2.png")
+```
+
+```{r}
+vol_DHEA1<-lmer(amygdala_vol ~ DHEA_corrected * Sex + age + race_ethnicity + household.income + married2 + high.educ + pea_wiscv_trs + rsfmri_ntpoints + (1|mri_info_deviceserialnumber) + (1|mri_info_deviceserialnumber:rel_family_id), data=df_t1, na.action = na.omit)
+```
+
+```{r}
+ tab_model(vol_dhea,vol_DHEA1, show.ci = FALSE, show.re.var = TRUE, show.p = TRUE, dv.labels = c("Amygdala Volume", "Amygdala Volume (cov)"),file = "table/volume_DHEA_cov.html")
+webshot("table/volume_DHEA_cov.html", "table/volume_DHEA_cov.png")
+```
+
+```{r}
+vol_T1<-lmer(amygdala_vol ~ T_corrected * Sex + age + race_ethnicity + household.income + married2 + high.educ + pea_wiscv_trs + rsfmri_ntpoints + (1|mri_info_deviceserialnumber) + (1|mri_info_deviceserialnumber:rel_family_id), data=df_t1, na.action = na.omit)
+```
+
+```{r}
+ tab_model(vol_test,vol_T1, show.ci = FALSE, show.re.var = TRUE, show.p = TRUE, dv.labels = c("Amygdala Volume", "Amygdala Volume (cov)"),file = "table/volume_T_cov.html")
+webshot("table/volume_T_cov.html", "table/volume_T_cov.png")
+```
+
+```{r}
+vol_E21<-lmer(amygdala_vol ~ E2_corrected + age + race_ethnicity + household.income + married2 + high.educ + pea_wiscv_trs + rsfmri_ntpoints + (1|mri_info_deviceserialnumber) + (1|mri_info_deviceserialnumber:rel_family_id), data=df_t1, na.action = na.omit)
+```
+
+```{r}
+ tab_model(vol_E2,vol_E21, show.ci = FALSE, show.re.var = TRUE, show.p = TRUE, dv.labels = c("Amygdala Volume", "Amygdala Volume (cov)"),file = "table/volume_E2_cov.html")
+webshot("table/volume_E2_cov.html", "table/volume_E2_cov.png")
+```
+
