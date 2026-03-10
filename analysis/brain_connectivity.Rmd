@@ -13,13 +13,13 @@ library(tidyverse)
 library(ggplot2)
 library(purrr)
 library(broom.mixed) 
-library(knitr)
-library(kableExtra)
+library(sjPlot)
+library(webshot2)
 ```
 
 
 ```{r}
-df<- read.csv("C:/Users/ymqian/Documents/multimodal_amygdala/analysis/processed_data.csv")
+# df<- read.csv("C:/Users/ymqian/Documents/multimodal_amygdala/analysis/processed_data.csv")
 ```
 
 rsfMRI: iqc_rsfmri_ok_ser>0, fsqc_qc=1 (Passed FreeSurfer QC), rsfmri_c_ngd_ntpoints > 375 (exclude excession motion) imgincl_rsfmri_include = 1 (I forget to ask for this variable)
@@ -32,27 +32,10 @@ df_rsfMRI<- df  %>%  filter(iqc_t1_ok_ser > 0)  %>% filter(fsqc_qc != "reject" |
 ```
 from N= 11634 to N=7345
 
-```{r}
-amy_pds_fc<-lm(amygdala_fc~stage_p*demo_sex_v2, data=df_rsfMRI, na.action = na.omit)
-anova(amy_pds_fc)
-```
 
 ```{r}
-amy_dhea_fc<-lm(amygdala_fc~dhea_corrected*demo_sex_v2, data=df_rsfMRI, na.action = na.omit)
-anova(amy_dhea_fc)
-```
-```{r}
-amy_test_fc<-lm(amygdala_fc~test_corrected*demo_sex_v2, data=df_rsfMRI, na.action = na.omit)
-anova(amy_test_fc)
-```
-```{r}
-amy_estr_fc<-lm(amygdala_fc~estr_corrected, data=df_rsfMRI, na.action = na.omit)
-anova(amy_estr_fc)
-```
-other 
-```{r}
 dv_list <- c("amygdala_fc","amygdala_fc_df","amygdala_fc_cerc","amygdala_fc_vs","amygdala_fc_au","amygdala_fc_copa","amygdala_fc_dsa","amygdala_fc_fopa","amygdala_fc_none","amygdala_fc_rst","amygdala_fc_smh","amygdala_fc_smm","amygdala_fc_vta")
-models <- map(dv_list, ~ lm(as.formula(paste(.x, "~ stage_p*demo_sex_v2")), 
+models <- map(dv_list, ~ lm(as.formula(paste(.x, "~ Pubertal_Stage*Sex")), 
                             data = df_rsfMRI, na.action = na.omit))
 
 names(models) <- dv_list
@@ -71,7 +54,7 @@ whole brain, df, cerc,au, copa,dsa,fopa, none,rst,smh,smm,vta ~pubertal stage
 whole brain, copa,fopa,vta ~sex
 smh ~interaction
 ```{r}
-models_dhea <- map(dv_list, ~ lm(as.formula(paste(.x, "~ dhea_corrected*demo_sex_v2")), 
+models_dhea <- map(dv_list, ~ lm(as.formula(paste(.x, "~ DHEA_corrected*Sex")), 
                             data = df_rsfMRI, na.action = na.omit))
 
 names(models_dhea) <- dv_list
@@ -89,7 +72,7 @@ whole brain,copa,dsa,fopa, smh,smm,vta ~sex
 smh ~dhea*sex
 
 ```{r}
-models_test <- map(dv_list, ~ lm(as.formula(paste(.x, "~ test_corrected*demo_sex_v2")), 
+models_test <- map(dv_list, ~ lm(as.formula(paste(.x, "~ T_corrected*Sex")), 
                             data = df_rsfMRI, na.action = na.omit))
 
 names(models_test) <- dv_list
@@ -105,7 +88,7 @@ whole brain, df, cerc,fopa, smh, smm ~ test
 whole brain, copa, dsa, fopa, smh, smm, vta ~sex
 
 ```{r}
-models_estr <- map(dv_list, ~ lm(as.formula(paste(.x, "~ estr_corrected")), 
+models_estr <- map(dv_list, ~ lm(as.formula(paste(.x, "~ E2_corrected")), 
                             data = df_rsfMRI, na.action = na.omit))
 
 names(models_estr) <- dv_list
@@ -122,7 +105,7 @@ whole brain, cerc,dsa ~ estr
 # sensirivity analysis (add cov)
 ```{r} 
 models_dhea1<- map(dv_list, ~ {
-  formula <- as.formula(paste(.x, "~ dhea_corrected * demo_sex_v2 + age + race_ethnicity + household.income + married2 + high.educ + pea_wiscv_trs + rsfmri_ntpoints + (1|mri_info_deviceserialnumber) + (1|mri_info_deviceserialnumber:rel_family_id)"))
+  formula <- as.formula(paste(.x, "~ DHEA_corrected * Sex + age + race_ethnicity + household.income + married2 + high.educ + pea_wiscv_trs + rsfmri_ntpoints + (1|mri_info_deviceserialnumber) + (1|mri_info_deviceserialnumber:rel_family_id)"))
   lmer(formula, data = df_rsfMRI, na.action = na.omit)})
 
 
@@ -132,6 +115,72 @@ names(models_dhea1) <- dv_list
 results_dhea1 <- map_df(models_dhea1, ~ tidy(.x, effects = "fixed", conf.int = TRUE), .id = "DV")
 
 car::Anova(models_dhea1[[1]])
-tab_model(models_dhea1[[1]], show.ci = FALSE, show.re.var = TRUE, show.p = TRUE,
-          dv.labels = "My Outcome Variable")
 ```
+
+```{r} 
+models_test1<- map(dv_list, ~ {
+  formula <- as.formula(paste(.x, "~ T_corrected * Sex + age + race_ethnicity + household.income + married2 + high.educ + pea_wiscv_trs + rsfmri_ntpoints + (1|mri_info_deviceserialnumber) + (1|mri_info_deviceserialnumber:rel_family_id)"))
+  lmer(formula, data = df_rsfMRI, na.action = na.omit)})
+
+
+names(models_test1) <- dv_list
+```
+
+```{r} 
+models_estr1<- map(dv_list, ~ {
+  formula <- as.formula(paste(.x, "~ E2_corrected + age + race_ethnicity + household.income + married2 + high.educ + pea_wiscv_trs + rsfmri_ntpoints + (1|mri_info_deviceserialnumber) + (1|mri_info_deviceserialnumber:rel_family_id)"))
+  lmer(formula, data = df_rsfMRI, na.action = na.omit)})
+
+
+names(models_estr1) <- dv_list
+```
+
+```{r}
+tab_model(models_dhea[[1]], models_dhea1[[1]], show.ci = FALSE, show.re.var = TRUE, show.p = TRUE, dv.labels = c("Amygdala Connnectivity","Amygdala Connnectivity with Covariates"), file = "table/FC_DHEA_wholebrain.html")
+webshot("table/FC_DHEA_wholebrain.html", "table/FC_DHEA_wholebrain.png")
+```
+
+```{r}
+tab_model(models_test[[1]], models_test1[[1]], show.ci = FALSE, show.re.var = TRUE, show.p = TRUE, dv.labels = c("Amygdala Connnectivity","Amygdala Connnectivity with Covariates"), file = "table/FC_T_wholebrain.html")
+webshot("table/FC_T_wholebrain.html", "table/FC_T_wholebrain.png")
+```
+
+```{r}
+tab_model(models_estr[[1]], models_estr1[[1]], show.ci = FALSE, show.re.var = TRUE, show.p = TRUE, dv.labels = c("Amygdala Connnectivity","Amygdala Connnectivity with Covariates"), file = "table/FC_E2_wholebrain.html")
+webshot("table/FC_E2_wholebrain.html", "table/FC_E2_wholebrain.png")
+```
+```{r}
+test<-lmer(amygdala_fc~ E2_corrected + (1|mri_info_deviceserialnumber) + (1|mri_info_deviceserialnumber:rel_family_id) , data=df_rsfMRI, na.action = na.omit)
+car::Anova(test, type=2)
+car::Anova(test, type=3)
+tab_model(test)
+
+test<-lm(amygdala_fc~ E2_corrected + age , data=df_rsfMRI, na.action = na.omit)
+tab_model(test)
+```
+
+# visualization
+```{r}
+df_rsfMRI %>%
+  ggplot(aes(x=DHEA_corrected,y=amygdala_fc, group=Sex, color=Sex)) +
+  geom_point(alpha=0.3) +
+  labs(x= "DHEA", y="Functional Connectivity of amygdala")+
+  geom_smooth(method = "loess", se=T)+theme_classic()
+```
+
+```{r}
+df_rsfMRI %>%
+  ggplot(aes(x=T_corrected,y=amygdala_fc, group=Sex, color=Sex)) +
+  geom_point(alpha=0.3) +
+  labs(x= "T", y="Functional Connectivity of amygdala")+
+  geom_smooth(method = "loess", se=T)+theme_classic()
+```
+
+```{r}
+df_rsfMRI %>%
+  ggplot(aes(x=E2_corrected,y=amygdala_fc)) +
+  geom_point(alpha=0.3) +
+  labs(x= "E2", y="Functional Connectivity of amygdala")+
+  geom_smooth(method = "loess", se=T)+theme_classic()
+```
+
