@@ -12,11 +12,9 @@ library(tidyverse)
 library(ggplot2)
 library(sjPlot)
 library(webshot2)
-<<<<<<< HEAD
-#library(apaTables)
-=======
+
 # library(apaTables)
->>>>>>> c1fee3c54d7f479bae070761cfc13e5a3f140ccf
+
 ```
 
 
