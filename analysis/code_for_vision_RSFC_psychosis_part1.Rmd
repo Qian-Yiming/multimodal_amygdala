@@ -1,0 +1,73 @@
+---
+title: "Vision_RSFC_Psychosis_part 1"
+author: "Yiming Qian"
+date: "2026-02-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Description
+
+This is a R Markdown code for the manuscript: .
+The codes have mainly four part: Data Management, Data Imputation, mediation models, visualization. I wrote the codes for Data Management. However, a good coding needs lots of troubleshooting. 
+
+As I did not have access to data, Jeff, please let me know where the codes does not work. At last, could you report the percentage of missing data, report the table of  demographic data in a format of our emotional sensitivity paper.
+
+I divide the Part 1 for sections:
+- identify the variable names required for this study
+- generate the final metrics with the consideration of missing data. Rename the variable if needed.
+- exclude the participants does not meet the inclusion criteria
+- Check the outliers, and winsorize/delete them based on what we said in registered report
+
+## 1.1 Getting the variables and clean-up
+Get the variables required. The key variables include: childhood adversity items, 5 vision-network functional connectivity metrics, 3 auditory-network functional connectivity metrics, PLEs score, PLEs visual distortion score and PLEs auditory score, and covariates. 
+The covariates include 
+Clean and organize the data based on the description in the registered report. The step include checking the outliers and rename the variables.
+
+Please download the dataframe containing these tables: "", "", "mh_y_pps" (PLEs at the 3rd year?), and '' (for covariates), "" (for inclusion criteria)
+```{r}
+data <- read.csv("your_file_path.csv")
+```
+
+## 1.2 Generating the metrics required for analysis
+
+### 1.2.1 Get 1 Childhood adversity metric (ACE)
+
+### 1.2.2 Get 8 functional connectivity metrics
+
+### 1.2.3 Get 3 PLEs metrics (PLEs, PLEs_visual, PLEs_auditory)
+
+Clean the missing data (999) and ()
+```{r}
+var_PLEs<-c("mh_y_pps__bother_001","mh_y_pps__severity_001")
+```
+
+
+For PLEs (consider the effect of missing data)
+```{r}
+PLEs<- sum()
+```
+
+
+## 1.3 Exclude the data based on our criteria
+
+## 1.4 Check outliers
+we set 3? deviation
+
+replace or delete?
+
+
+## Imputation
+In the registered report, we mentioned we want to do FIML. However, it is no straightforward way to do FIML in the current mediation models in R package. Thus, we do the imputation first.
+
+## mediation models
+
+### mediation models
+
+### moderated mediation models
+
+## Visualization
+
